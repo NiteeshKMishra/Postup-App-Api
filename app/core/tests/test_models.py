@@ -4,6 +4,7 @@ Tests for custom models
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 
 
 class ModelTests(TestCase):
@@ -37,6 +38,21 @@ class ModelTests(TestCase):
             )
             self.assertEqual(user.email, normalized_email)
 
+    def test_create_user_with_dob_success(self):
+        """Test if user creation is successful with valid dob"""
+        email = "test1@example.com"
+        password = "test1pass"
+        name = "User1"
+        dob = "1997-05-09"
+
+        user_model_object = get_user_model().objects
+        user = user_model_object.create_user(
+            email=email, password=password, name=name, dob=dob
+        )
+
+        self.assertTrue(user.name, name)
+        self.assertEqual(user.dob, dob)
+
     def test_create_user_without_email_password_fails(self):
         """Test if user creation is failed with empty email and password"""
         user_model_object = get_user_model().objects
@@ -47,6 +63,20 @@ class ModelTests(TestCase):
             user_model_object.create_user(
                 email="test1@example.com", password=""
             )
+
+    def test_create_user_with_invalid_dob_fails(self):
+        """Test if user creation is failed with invalid dob"""
+        email = "test1@example.com"
+        password = "test1pass"
+        invalid_dob2 = "2020-06-08"
+
+        user_model_object = get_user_model().objects
+
+        with self.assertRaises(ValidationError):
+            user_model_object.create_user(
+                email=email,
+                password=password,
+                dob=invalid_dob2)
 
     def test_create_super_user_success(self):
         """Test if superuser is created"""

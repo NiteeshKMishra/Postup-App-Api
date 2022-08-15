@@ -9,6 +9,8 @@ from django.contrib.auth.models import (
     PermissionsMixin
 )
 
+from core.validators import validate_dob
+
 
 class UserManager(BaseUserManager):
     """User manger for system users"""
@@ -19,7 +21,9 @@ class UserManager(BaseUserManager):
             raise ValueError("Email is required")
         if password is None or password == "":
             raise ValueError("Password is required")
-
+        if "dob" in extra_fields:
+            dob = extra_fields["dob"]
+            validate_dob(dob)
         user = self.model(email=self.normalize_email(email), **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -40,10 +44,18 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     """User in the system"""
-    email = models.EmailField(max_length=255, unique=True)
-    name = models.CharField(max_length=255)
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
+    email = models.EmailField(
+        max_length=255,
+        unique=True,
+        help_text="Email of user")
+    name = models.CharField(max_length=255, help_text="Name of user")
+    dob = models.DateField(null=True, validators=[validate_dob], help_text="Date of birth of user")
+    is_active = models.BooleanField(
+        default=True,
+        help_text="User is active or not")
+    is_staff = models.BooleanField(
+        default=False,
+        help_text="User is staff or not")
 
     objects = UserManager()
 
